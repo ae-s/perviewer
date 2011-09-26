@@ -1,0 +1,13 @@
+Image Perver
+
+I'm working with TIFF scans of double-sided pages.  My normal tool,
+xzgv, fails me here.  I despair at trying all the image viewers Debian
+has, because I know that I'll find sixteen piles of suck that don't do
+what I want, three fancies that are wrong, and exactly nothing that
+works.
+
+This is an image viewer designed for looking at scans of books.  It
+displays both the verso (left) and recto (right) of each spread on the
+screen at the same time.  The intent is to approach a book reading
+experience, but also have useful doodads hanging off the side.  It's
+not exactly intended to be just a ready thing.
