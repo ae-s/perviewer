@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE glade-interface SYSTEM "glade-2.0.dtd">
-<!--Generated with glade3 3.4.5 on Mon Sep 26 00:27:21 2011 -->
+<!--Generated with glade3 3.4.5 on Mon Sep 26 23:28:50 2011 -->
 <glade-interface>
   <widget class="GtkWindow" id="imagebrowser">
     <property name="title" translatable="yes">Perviewer</property>
@@ -146,6 +146,7 @@
             <property name="can_focus">True</property>
             <child>
               <widget class="GtkTreeView" id="pagelist">
+                <property name="width_request">200</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="headers_clickable">True</property>
