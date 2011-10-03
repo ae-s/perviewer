@@ -41,9 +41,10 @@ int main(int argc, char **argv)
 
 	pages_setup(pagelist, argv + 1);
 
+	gtk_widget_show(window);
+	printf("showed %p\n", window);
 	g_object_unref(G_OBJECT(foo));
 	foo = NULL;
-	gtk_widget_show(window);
 
 	recto_p = gdk_pixbuf_new_from_file(argv[2], NULL);
 	verso_p = gdk_pixbuf_new_from_file(argv[1], NULL);
@@ -74,6 +75,38 @@ void changesize_verso(GtkWidget *widget, GtkAllocation *allo, gpointer data)
 void advance_spread(GtkWidget *pages, GtkImage *verso, GtkImage *recto)
 {
 
+}
+
+void add_spread(GtkListStore *pages, GtkTreeIter *it,
+		int spread_no,
+		char *verso, GdkPixbuf *verso_img,
+		char *recto, GdkPixbuf *recto_img)
+{
+	char *name = malloc(20 * sizeof(char));
+
+	if (verso == NULL) {
+		snprintf(name, 20 * sizeof(char), "%d", spread_no * 2 + 1);
+		gtk_list_store_set(pages, it,
+				   0, name,
+				   2, recto_img,
+				   -1);
+
+	} else if (recto == NULL) {
+		snprintf(name, 20 * sizeof(char), "%d", spread_no * 2);
+		gtk_list_store_set(pages, it,
+				   0, name,
+				   1, verso_img,
+				   -1);
+
+	} else {
+		snprintf(name, 20 * sizeof(char), "%d / %d", spread_no * 2, spread_no * 2 + 1);
+		gtk_list_store_set(pages, it,
+				   0, name,
+				   1, verso_img,
+				   2, recto_img,
+				   -1);
+	}
+	return;
 }
 
 GtkTreeModel *pages_setup(GtkTreeView *container, char *files[])
@@ -128,10 +161,16 @@ GtkListStore *load_pages(char *files[])
 	GtkListStore *pages;
 	GdkPixbuf *buf;
 	GdkPixbuf *buf_sm_v, *buf_sm_r;
+	char *name_verso, name_recto;
+	char *title;
+	int i = -1;
 
-	pages = gtk_list_store_new(3, G_TYPE_STRING,
-				   GDK_TYPE_PIXBUF,
-				   GDK_TYPE_PIXBUF);
+	pages = gtk_list_store_new(5,
+				   G_TYPE_STRING,   /* title for row */
+				   GDK_TYPE_PIXBUF, /* verso */
+				   GDK_TYPE_PIXBUF, /* recto */
+				   G_TYPE_STRING,   /* verso filename */
+				   G_TYPE_STRING    /* recto filename */);
 
 	printf("pages is %s\n", G_OBJECT_TYPE_NAME(pages));
 
@@ -139,24 +178,43 @@ GtkListStore *load_pages(char *files[])
 		return pages;
 
 	while (*files != NULL) {
+		i++;
+
 		/* verso */
-		buf = gdk_pixbuf_new_from_file(*files++, NULL);
-		printf("adding %p (%s)\n", buf, G_OBJECT_TYPE_NAME(buf));
-		buf_sm_v = gdk_pixbuf_scale_simple(buf, 50, 50, GDK_INTERP_BILINEAR);
-		g_object_unref(buf);
+		if (i == 0) {
+			/* First spread is recto-only */
+			name_verso = NULL;
+			buf_sm_v = NULL;
+		} else {
+			name_verso = *files;
+			buf = gdk_pixbuf_new_from_file(*files++, NULL);
+			printf("adding %p (%s)\n", buf, G_OBJECT_TYPE_NAME(buf));
+			buf_sm_v = gdk_pixbuf_scale_simple(buf, 50, 50, GDK_INTERP_BILINEAR);
+			g_object_unref(buf);
+		}
 
 		/* recto */
-		buf = gdk_pixbuf_new_from_file(*files++, NULL);
-		printf("adding %p (%s)\n", buf, G_OBJECT_TYPE_NAME(buf));
-		buf_sm_r = gdk_pixbuf_scale_simple(buf, 50, 50, GDK_INTERP_BILINEAR);
-		g_object_unref(buf);
+		if (*files == NULL) {
+			/* Final spread, no recto */
+			name_recto = NULL;
+			buf_sm_r = NULL;
+		} else {
+			name_recto = *files;
+			buf = gdk_pixbuf_new_from_file(*files++, NULL);
+			printf("adding %p (%s)\n", buf, G_OBJECT_TYPE_NAME(buf));
+			buf_sm_r = gdk_pixbuf_scale_simple(buf, 50, 50, GDK_INTERP_BILINEAR);
+			g_object_unref(buf);
+		}
+
+		title = malloc(20);
+		sprintf(title, "%d / %d", i-1, i);
+
 		gtk_list_store_append(pages, &it);
 
-		gtk_list_store_set(pages, &it,
-				   0, "foo:",
-				   1, buf_sm_v,
-				   2, buf_sm_r,
-				   -1);
+		add_spread(pages, &it,
+			   i,
+			   name_verso, buf_sm_v,
+			   name_recto, buf_sm_r);
 
 		g_object_unref(buf_sm_v);
 		g_object_unref(buf_sm_r);
